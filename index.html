@@ -3,11 +3,401 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Old Orc · Ads Dashboard</title>
+<title>O.O · Ads Dashboard</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<!-- FULL CONTENT WOULD GO HERE - truncated for this call -->
+<style>
+  :root {
+    --bg: #0f1419;
+    --card: #1a2332;
+    --text: #e8eef5;
+    --muted: #8b9bb4;
+    --meta: #1877f2;
+    --google: #34a853;
+    --accent: #ff6b35;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  h1 { margin: 0 0 8px; font-size: 1.8rem; }
+  .subtitle { color: var(--muted); margin-bottom: 20px; }
+  .metric-btns {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .metric-btns button {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid #2a3548;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .metric-btns button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+  .view-btns {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .view-btns button {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid #2a3548;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .view-btns button.active {
+    background: #2a3548;
+    border-color: #4a5a78;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding-left: 4px;
+  }
+  .filters button {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid #2a3548;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .filters button.active {
+    background: #2a3548;
+    color: var(--text);
+    border-color: #4a5a78;
+  }
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .card .label { color: var(--muted); font-size: 0.85rem; }
+  .card .value { font-size: 1.6rem; font-weight: 700; margin-top: 4px; }
+  .card.meta .value { color: var(--meta); }
+  .card.google .value { color: var(--google); }
+  .card.total .value { color: var(--accent); }
+  .chart-wrap {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    height: 420px;
+    position: relative;
+  }
+  .chart-wrap canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .footer { margin-top: 32px; color: var(--muted); font-size: 0.8rem; text-align: center; }
+</style>
 </head>
 <body>
-<p>Dashboard completo - atualizando...</p>
+  <h1>O.O · Ads Dashboard</h1>
+  <div class="subtitle">Meta Ads + Google Ads · a partir de agosto/2026</div>
+
+  <div class="metric-btns" id="metricBtns">
+    <button data-metric="spend" class="active">Gasto</button>
+    <button data-metric="clicks">Cliques</button>
+    <button data-metric="cpc">CPC</button>
+    <button data-metric="roas">ROAS</button>
+    <button data-metric="cpa">Custo por venda</button>
+  </div>
+
+  <div class="view-btns" id="viewBtns">
+    <button data-view="daily" class="active">Diário</button>
+    <button data-view="monthly">Mensal</button>
+  </div>
+
+  <div class="filters" id="filters">
+    <button data-month="all" class="active">Todos</button>
+    <button data-month="08">Agosto</button>
+    <button data-month="09">Setembro</button>
+    <button data-month="10">Outubro</button>
+  </div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="chart-wrap">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <div class="footer">
+    Dados via Zernio · Agosto a Outubro 2026<br>
+    ROAS = receita / gasto · Custo por venda = gasto / conversões
+  </div>
+
+<script>
+const DATA = {"meta": [{"date": "2026-08-01", "spend": 42.19, "clicks": 256, "conversions": 184.0, "roas": 0.0, "impressions": 3689, "cpc": 0.16, "purchaseValue": 0.0}, {"date": "2026-08-03", "spend": 41.09, "clicks": 261, "conversions": 150.0, "roas": 0.0, "impressions": 3853, "cpc": 0.16, "purchaseValue": 0.0}, {"date": "2026-08-04", "spend": 51.65, "clicks": 319, "conversions": 209.0, "roas": 0.0, "impressions": 4995, "cpc": 0.16, "purchaseValue": 0.0}, {"date": "2026-08-05", "spend": 43.16, "clicks": 286, "conversions": 187.0, "roas": 0.0, "impressions": 3908, "cpc": 0.15, "purchaseValue": 0.0}, {"date": "2026-08-06", "spend": 46.13, "clicks": 269, "conversions": 172.0, "roas": 5.64, "impressions": 3875, "cpc": 0.17, "purchaseValue": 259.99}, {"date": "2026-08-07", "spend": 33.38, "clicks": 220, "conversions": 108.0, "roas": 27.56, "impressions": 2738, "cpc": 0.15, "purchaseValue": 920.01}, {"date": "2026-08-08", "spend": 22.46, "clicks": 110, "conversions": 1.0, "roas": 18.74, "impressions": 1234, "cpc": 0.2, "purchaseValue": 420.79}, {"date": "2026-08-09", "spend": 34.04, "clicks": 124, "conversions": 1.0, "roas": 25.27, "impressions": 1914, "cpc": 0.27, "purchaseValue": 860.05}, {"date": "2026-08-10", "spend": 25.33, "clicks": 162, "conversions": 5.0, "roas": 64.99, "impressions": 1786, "cpc": 0.16, "purchaseValue": 1646.09}, {"date": "2026-08-11", "spend": 33.53, "clicks": 384, "conversions": 9.0, "roas": 68.83, "impressions": 2207, "cpc": 0.09, "purchaseValue": 2307.9}, {"date": "2026-08-12", "spend": 24.73, "clicks": 226, "conversions": 7.0, "roas": 51.67, "impressions": 1655, "cpc": 0.11, "purchaseValue": 1277.83}, {"date": "2026-08-13", "spend": 24.99, "clicks": 287, "conversions": 10.0, "roas": 116.32, "impressions": 2226, "cpc": 0.09, "purchaseValue": 2906.95}, {"date": "2026-08-14", "spend": 26.6, "clicks": 348, "conversions": 6.0, "roas": 52.57, "impressions": 2512, "cpc": 0.08, "purchaseValue": 1398.46}, {"date": "2026-08-15", "spend": 25.09, "clicks": 212, "conversions": 1.0, "roas": 19.02, "impressions": 2004, "cpc": 0.12, "purchaseValue": 477.11}, {"date": "2026-08-16", "spend": 34.17, "clicks": 448, "conversions": 4.0, "roas": 22.89, "impressions": 3104, "cpc": 0.08, "purchaseValue": 782.15}, {"date": "2026-08-17", "spend": 33.38, "clicks": 269, "conversions": 4.0, "roas": 80.18, "impressions": 2808, "cpc": 0.12, "purchaseValue": 2676.55}, {"date": "2026-08-18", "spend": 46.61, "clicks": 402, "conversions": 3.0, "roas": 21.87, "impressions": 3704, "cpc": 0.12, "purchaseValue": 1019.51}, {"date": "2026-08-19", "spend": 41.91, "clicks": 385, "conversions": 6.0, "roas": 50.15, "impressions": 3025, "cpc": 0.11, "purchaseValue": 2101.97}, {"date": "2026-08-20", "spend": 35.82, "clicks": 301, "conversions": 3.0, "roas": 32.91, "impressions": 2589, "cpc": 0.12, "purchaseValue": 1178.74}, {"date": "2026-08-21", "spend": 32.22, "clicks": 303, "conversions": 9.0, "roas": 142.74, "impressions": 2331, "cpc": 0.11, "purchaseValue": 4599.2}, {"date": "2026-08-22", "spend": 42.5, "clicks": 399, "conversions": 9.0, "roas": 53.63, "impressions": 2924, "cpc": 0.11, "purchaseValue": 2279.27}, {"date": "2026-08-23", "spend": 41.89, "clicks": 346, "conversions": 4.0, "roas": 59.91, "impressions": 2734, "cpc": 0.12, "purchaseValue": 2509.73}, {"date": "2026-08-24", "spend": 48.29, "clicks": 364, "conversions": 4.0, "roas": 21.02, "impressions": 3675, "cpc": 0.13, "purchaseValue": 1015.24}, {"date": "2026-08-25", "spend": 39.47, "clicks": 263, "conversions": 4.0, "roas": 45.57, "impressions": 2582, "cpc": 0.15, "purchaseValue": 1798.53}, {"date": "2026-08-26", "spend": 35.45, "clicks": 305, "conversions": 6.0, "roas": 59.47, "impressions": 2660, "cpc": 0.12, "purchaseValue": 2108.15}, {"date": "2026-08-27", "spend": 37.72, "clicks": 398, "conversions": 7.0, "roas": 98.69, "impressions": 2807, "cpc": 0.09, "purchaseValue": 3722.57}, {"date": "2026-08-28", "spend": 52.96, "clicks": 455, "conversions": 14.0, "roas": 74.99, "impressions": 3408, "cpc": 0.12, "purchaseValue": 3971.7}, {"date": "2026-08-29", "spend": 53.42, "clicks": 646, "conversions": 14.0, "roas": 108.13, "impressions": 3425, "cpc": 0.08, "purchaseValue": 5776.12}, {"date": "2026-08-30", "spend": 69.17, "clicks": 902, "conversions": 26.0, "roas": 93.28, "impressions": 4803, "cpc": 0.08, "purchaseValue": 6452.51}, {"date": "2026-08-31", "spend": 82.06, "clicks": 990, "conversions": 46.0, "roas": 132.3, "impressions": 6410, "cpc": 0.08, "purchaseValue": 10856.39}, {"date": "2026-09-01", "spend": 77.56, "clicks": 877, "conversions": 32.0, "roas": 207.44, "impressions": 5808, "cpc": 0.09, "purchaseValue": 16088.87}, {"date": "2026-09-02", "spend": 74.6, "clicks": 858, "conversions": 30.0, "roas": 144.06, "impressions": 6265, "cpc": 0.09, "purchaseValue": 10746.62}, {"date": "2026-09-03", "spend": 74.86, "clicks": 808, "conversions": 34.0, "roas": 151.59, "impressions": 5842, "cpc": 0.09, "purchaseValue": 11347.99}, {"date": "2026-09-04", "spend": 108.22, "clicks": 1105, "conversions": 38.0, "roas": 123.02, "impressions": 9066, "cpc": 0.1, "purchaseValue": 13313.58}, {"date": "2026-09-05", "spend": 128.34, "clicks": 1334, "conversions": 33.0, "roas": 88.9, "impressions": 10865, "cpc": 0.1, "purchaseValue": 11409.83}, {"date": "2026-09-06", "spend": 172.96, "clicks": 1627, "conversions": 30.0, "roas": 53.06, "impressions": 13664, "cpc": 0.11, "purchaseValue": 9177.7}, {"date": "2026-09-07", "spend": 130.93, "clicks": 1458, "conversions": 20.0, "roas": 64.14, "impressions": 10633, "cpc": 0.09, "purchaseValue": 8397.52}, {"date": "2026-09-08", "spend": 116.78, "clicks": 1100, "conversions": 24.0, "roas": 76.16, "impressions": 9114, "cpc": 0.11, "purchaseValue": 8893.94}, {"date": "2026-09-09", "spend": 104.5, "clicks": 993, "conversions": 36.0, "roas": 119.11, "impressions": 7860, "cpc": 0.11, "purchaseValue": 12446.91}, {"date": "2026-09-10", "spend": 113.71, "clicks": 1093, "conversions": 37.0, "roas": 139.35, "impressions": 8554, "cpc": 0.1, "purchaseValue": 15845.78}, {"date": "2026-09-11", "spend": 204.1, "clicks": 1864, "conversions": 36.0, "roas": 53.19, "impressions": 14482, "cpc": 0.11, "purchaseValue": 10855.48}, {"date": "2026-09-12", "spend": 226.45, "clicks": 1821, "conversions": 28.0, "roas": 43.38, "impressions": 15076, "cpc": 0.12, "purchaseValue": 9822.4}, {"date": "2026-09-13", "spend": 242.3, "clicks": 2124, "conversions": 34.0, "roas": 44.39, "impressions": 17452, "cpc": 0.11, "purchaseValue": 10755.62}, {"date": "2026-09-14", "spend": 183.59, "clicks": 1709, "conversions": 35.0, "roas": 68.46, "impressions": 14516, "cpc": 0.11, "purchaseValue": 12568.64}, {"date": "2026-09-15", "spend": 197.64, "clicks": 1768, "conversions": 27.0, "roas": 44.85, "impressions": 14196, "cpc": 0.11, "purchaseValue": 8863.18}, {"date": "2026-09-16", "spend": 236.03, "clicks": 1801, "conversions": 34.0, "roas": 38.98, "impressions": 17285, "cpc": 0.13, "purchaseValue": 9201.59}, {"date": "2026-09-17", "spend": 184.86, "clicks": 1378, "conversions": 23.0, "roas": 35.54, "impressions": 12312, "cpc": 0.13, "purchaseValue": 6569.69}, {"date": "2026-09-18", "spend": 203.59, "clicks": 1551, "conversions": 21.0, "roas": 45.07, "impressions": 13024, "cpc": 0.13, "purchaseValue": 9175.86}, {"date": "2026-09-19", "spend": 218.32, "clicks": 1845, "conversions": 23.0, "roas": 44.59, "impressions": 15912, "cpc": 0.12, "purchaseValue": 9734.34}, {"date": "2026-09-20", "spend": 202.89, "clicks": 1590, "conversions": 21.0, "roas": 46.14, "impressions": 14399, "cpc": 0.13, "purchaseValue": 9360.58}, {"date": "2026-09-21", "spend": 214.93, "clicks": 1602, "conversions": 25.0, "roas": 36.85, "impressions": 15102, "cpc": 0.13, "purchaseValue": 7919.64}, {"date": "2026-09-22", "spend": 222.12, "clicks": 1716, "conversions": 19.0, "roas": 25.73, "impressions": 15929, "cpc": 0.13, "purchaseValue": 5714.58}, {"date": "2026-09-23", "spend": 233.09, "clicks": 1924, "conversions": 23.0, "roas": 39.47, "impressions": 15054, "cpc": 0.12, "purchaseValue": 9198.94}, {"date": "2026-09-24", "spend": 173.3, "clicks": 1321, "conversions": 14.0, "roas": 24.32, "impressions": 10538, "cpc": 0.13, "purchaseValue": 4214.32}, {"date": "2026-09-25", "spend": 193.92, "clicks": 1542, "conversions": 33.0, "roas": 60.77, "impressions": 11357, "cpc": 0.13, "purchaseValue": 11785.45}, {"date": "2026-09-26", "spend": 226.29, "clicks": 1703, "conversions": 13.0, "roas": 19.96, "impressions": 12439, "cpc": 0.13, "purchaseValue": 4515.75}, {"date": "2026-09-27", "spend": 237.81, "clicks": 1889, "conversions": 18.0, "roas": 24.23, "impressions": 12973, "cpc": 0.13, "purchaseValue": 5762.58}, {"date": "2026-09-28", "spend": 207.61, "clicks": 1744, "conversions": 17.0, "roas": 33.41, "impressions": 13372, "cpc": 0.12, "purchaseValue": 6935.73}, {"date": "2026-09-29", "spend": 177.67, "clicks": 1442, "conversions": 17.0, "roas": 43.6, "impressions": 10894, "cpc": 0.12, "purchaseValue": 7747.13}, {"date": "2026-09-30", "spend": 205.73, "clicks": 1404, "conversions": 23.0, "roas": 34.5, "impressions": 10775, "cpc": 0.15, "purchaseValue": 7098.39}, {"date": "2026-10-01", "spend": 246.23, "clicks": 1604, "conversions": 24.0, "roas": 37.92, "impressions": 12071, "cpc": 0.15, "purchaseValue": 9337.66}, {"date": "2026-10-02", "spend": 221.07, "clicks": 1648, "conversions": 29.0, "roas": 50.23, "impressions": 12638, "cpc": 0.13, "purchaseValue": 11104.82}, {"date": "2026-10-03", "spend": 172.35, "clicks": 1390, "conversions": 27.0, "roas": 48.01, "impressions": 11349, "cpc": 0.12, "purchaseValue": 8274.88}, {"date": "2026-10-04", "spend": 233.97, "clicks": 1705, "conversions": 19.0, "roas": 23.75, "impressions": 17959, "cpc": 0.14, "purchaseValue": 5555.85}, {"date": "2026-10-05", "spend": 186.8, "clicks": 1706, "conversions": 18.0, "roas": 29.15, "impressions": 16702, "cpc": 0.11, "purchaseValue": 5445.02}, {"date": "2026-10-06", "spend": 218.02, "clicks": 1867, "conversions": 37.0, "roas": 70.03, "impressions": 16617, "cpc": 0.12, "purchaseValue": 15266.99}, {"date": "2026-10-07", "spend": 204.19, "clicks": 1590, "conversions": 35.0, "roas": 59.58, "impressions": 14039, "cpc": 0.13, "purchaseValue": 12166.14}, {"date": "2026-10-08", "spend": 191.44, "clicks": 1510, "conversions": 20.0, "roas": 47.23, "impressions": 13411, "cpc": 0.13, "purchaseValue": 9041.36}, {"date": "2026-10-09", "spend": 220.13, "clicks": 1539, "conversions": 26.0, "roas": 48.73, "impressions": 15566, "cpc": 0.14, "purchaseValue": 10727.58}, {"date": "2026-10-10", "spend": 213.63, "clicks": 1350, "conversions": 12.0, "roas": 18.85, "impressions": 14011, "cpc": 0.16, "purchaseValue": 4026.5}, {"date": "2026-10-11", "spend": 236.05, "clicks": 1757, "conversions": 28.0, "roas": 46.48, "impressions": 16852, "cpc": 0.13, "purchaseValue": 10970.55}, {"date": "2026-10-12", "spend": 205.02, "clicks": 1856, "conversions": 11.0, "roas": 10.94, "impressions": 18456, "cpc": 0.11, "purchaseValue": 2243.07}, {"date": "2026-10-13", "spend": 191.62, "clicks": 1645, "conversions": 20.0, "roas": 35.53, "impressions": 17090, "cpc": 0.12, "purchaseValue": 6807.42}, {"date": "2026-10-14", "spend": 195.29, "clicks": 1664, "conversions": 13.0, "roas": 28.38, "impressions": 15538, "cpc": 0.12, "purchaseValue": 5542.86}, {"date": "2026-10-15", "spend": 176.93, "clicks": 1241, "conversions": 16.0, "roas": 47.93, "impressions": 13780, "cpc": 0.14, "purchaseValue": 8480.94}, {"date": "2026-10-16", "spend": 262.85, "clicks": 1722, "conversions": 18.0, "roas": 30.81, "impressions": 21324, "cpc": 0.15, "purchaseValue": 8098.67}, {"date": "2026-10-17", "spend": 198.85, "clicks": 1459, "conversions": 22.0, "roas": 43.76, "impressions": 17099, "cpc": 0.14, "purchaseValue": 8701.46}, {"date": "2026-10-18", "spend": 4.68, "clicks": 45, "conversions": 10.0, "roas": 742.98, "impressions": 358, "cpc": 0.1, "purchaseValue": 3477.13}, {"date": "2026-10-19", "spend": 218.01, "clicks": 1822, "conversions": 13.0, "roas": 18.51, "impressions": 19302, "cpc": 0.12, "purchaseValue": 4035.22}, {"date": "2026-10-20", "spend": 284.26, "clicks": 2059, "conversions": 19.0, "roas": 24.19, "impressions": 22553, "cpc": 0.14, "purchaseValue": 6875.13}, {"date": "2026-10-21", "spend": 247.73, "clicks": 1660, "conversions": 14.0, "roas": 21.7, "impressions": 19231, "cpc": 0.15, "purchaseValue": 5375.53}, {"date": "2026-10-22", "spend": 257.41, "clicks": 1852, "conversions": 21.0, "roas": 30.61, "impressions": 20009, "cpc": 0.14, "purchaseValue": 7878.56}, {"date": "2026-10-23", "spend": 224.58, "clicks": 1699, "conversions": 24.0, "roas": 45.0, "impressions": 18063, "cpc": 0.13, "purchaseValue": 10105.17}, {"date": "2026-10-24", "spend": 230.1, "clicks": 1662, "conversions": 15.0, "roas": 24.9, "impressions": 18879, "cpc": 0.14, "purchaseValue": 5730.43}, {"date": "2026-10-25", "spend": 235.55, "clicks": 1532, "conversions": 10.0, "roas": 22.73, "impressions": 19290, "cpc": 0.15, "purchaseValue": 5352.9}, {"date": "2026-10-26", "spend": 168.03, "clicks": 1127, "conversions": 20.0, "roas": 52.22, "impressions": 15085, "cpc": 0.15, "purchaseValue": 8774.32}, {"date": "2026-10-27", "spend": 9.53, "clicks": 131, "conversions": 6.0, "roas": 288.6, "impressions": 834, "cpc": 0.07, "purchaseValue": 2750.32}, {"date": "2026-10-28", "spend": 115.09, "clicks": 774, "conversions": 9.0, "roas": 25.7, "impressions": 7667, "cpc": 0.15, "purchaseValue": 2957.72}, {"date": "2026-10-29", "spend": 336.7, "clicks": 2078, "conversions": 23.0, "roas": 24.89, "impressions": 22042, "cpc": 0.16, "purchaseValue": 8380.92}, {"date": "2026-10-30", "spend": 323.32, "clicks": 2107, "conversions": 31.0, "roas": 43.06, "impressions": 21128, "cpc": 0.15, "purchaseValue": 13922.5}, {"date": "2026-10-31", "spend": 35.76, "clicks": 229, "conversions": 0.0, "roas": 0.0, "impressions": 2169, "cpc": 0.16, "purchaseValue": 0.0}], "google": [{"date": "2026-08-03", "spend": 46.42, "clicks": 236, "conversions": 131.7, "roas": 70.6, "impressions": 4820, "cpc": 0.2, "purchaseValue": 3277.07}, {"date": "2026-08-04", "spend": 61.5, "clicks": 276, "conversions": 124.5, "roas": 40.64, "impressions": 4691, "cpc": 0.22, "purchaseValue": 2499.2}, {"date": "2026-08-05", "spend": 62.7, "clicks": 280, "conversions": 138.0, "roas": 55.19, "impressions": 5854, "cpc": 0.22, "purchaseValue": 3460.19}, {"date": "2026-08-06", "spend": 53.48, "clicks": 271, "conversions": 147.7, "roas": 77.83, "impressions": 5905, "cpc": 0.2, "purchaseValue": 4162.31}, {"date": "2026-08-07", "spend": 43.59, "clicks": 260, "conversions": 75.9, "roas": 199.49, "impressions": 5028, "cpc": 0.17, "purchaseValue": 8695.82}, {"date": "2026-08-08", "spend": 59.35, "clicks": 277, "conversions": 15.9, "roas": 69.96, "impressions": 6625, "cpc": 0.21, "purchaseValue": 4152.1}, {"date": "2026-08-09", "spend": 45.01, "clicks": 208, "conversions": 7.3, "roas": 75.55, "impressions": 3969, "cpc": 0.22, "purchaseValue": 3400.42}, {"date": "2026-08-10", "spend": 50.48, "clicks": 229, "conversions": 7.6, "roas": 44.24, "impressions": 5149, "cpc": 0.22, "purchaseValue": 2233.39}, {"date": "2026-08-11", "spend": 27.95, "clicks": 197, "conversions": 7.5, "roas": 72.11, "impressions": 5581, "cpc": 0.14, "purchaseValue": 2015.34}, {"date": "2026-08-12", "spend": 19.76, "clicks": 173, "conversions": 15.1, "roas": 197.1, "impressions": 3985, "cpc": 0.11, "purchaseValue": 3894.69}, {"date": "2026-08-13", "spend": 17.19, "clicks": 135, "conversions": 12.3, "roas": 211.77, "impressions": 3847, "cpc": 0.13, "purchaseValue": 3640.27}, {"date": "2026-08-14", "spend": 27.37, "clicks": 169, "conversions": 10.2, "roas": 115.48, "impressions": 4109, "cpc": 0.16, "purchaseValue": 3160.72}, {"date": "2026-08-15", "spend": 21.13, "clicks": 182, "conversions": 7.9, "roas": 193.76, "impressions": 4197, "cpc": 0.12, "purchaseValue": 4094.12}, {"date": "2026-08-16", "spend": 39.02, "clicks": 95, "conversions": 2.1, "roas": 10.14, "impressions": 1368, "cpc": 0.41, "purchaseValue": 395.59}, {"date": "2026-08-17", "spend": 158.6, "clicks": 512, "conversions": 26.3, "roas": 44.8, "impressions": 13457, "cpc": 0.31, "purchaseValue": 7105.26}, {"date": "2026-08-18", "spend": 77.39, "clicks": 371, "conversions": 31.1, "roas": 137.1, "impressions": 9448, "cpc": 0.21, "purchaseValue": 10610.54}, {"date": "2026-08-19", "spend": 72.81, "clicks": 373, "conversions": 12.3, "roas": 42.1, "impressions": 9731, "cpc": 0.2, "purchaseValue": 3065.55}, {"date": "2026-08-20", "spend": 37.44, "clicks": 268, "conversions": 13.4, "roas": 99.2, "impressions": 7530, "cpc": 0.14, "purchaseValue": 3714.14}, {"date": "2026-08-21", "spend": 76.94, "clicks": 278, "conversions": 10.2, "roas": 45.41, "impressions": 8045, "cpc": 0.28, "purchaseValue": 3493.58}, {"date": "2026-08-22", "spend": 106.15, "clicks": 348, "conversions": 19.1, "roas": 55.78, "impressions": 9348, "cpc": 0.31, "purchaseValue": 5921.49}, {"date": "2026-08-23", "spend": 69.47, "clicks": 314, "conversions": 22.7, "roas": 139.96, "impressions": 7905, "cpc": 0.22, "purchaseValue": 9722.75}, {"date": "2026-08-24", "spend": 77.74, "clicks": 138, "conversions": 3.6, "roas": 9.34, "impressions": 2702, "cpc": 0.56, "purchaseValue": 725.87}, {"date": "2026-08-25", "spend": 51.73, "clicks": 82, "conversions": 5.4, "roas": 28.56, "impressions": 664, "cpc": 0.63, "purchaseValue": 1477.19}, {"date": "2026-08-26", "spend": 51.43, "clicks": 100, "conversions": 3.0, "roas": 27.48, "impressions": 1245, "cpc": 0.51, "purchaseValue": 1413.32}, {"date": "2026-08-27", "spend": 51.74, "clicks": 123, "conversions": 13.5, "roas": 91.52, "impressions": 1000, "cpc": 0.42, "purchaseValue": 4735.39}, {"date": "2026-08-28", "spend": 92.89, "clicks": 250, "conversions": 18.7, "roas": 51.63, "impressions": 3355, "cpc": 0.37, "purchaseValue": 4795.67}, {"date": "2026-08-29", "spend": 175.66, "clicks": 770, "conversions": 37.5, "roas": 67.77, "impressions": 17813, "cpc": 0.23, "purchaseValue": 11905.1}, {"date": "2026-08-30", "spend": 168.23, "clicks": 774, "conversions": 30.6, "roas": 49.81, "impressions": 14927, "cpc": 0.22, "purchaseValue": 8379.49}, {"date": "2026-08-31", "spend": 134.12, "clicks": 738, "conversions": 38.9, "roas": 85.84, "impressions": 13043, "cpc": 0.18, "purchaseValue": 11513.47}, {"date": "2026-09-01", "spend": 145.44, "clicks": 787, "conversions": 46.3, "roas": 84.7, "impressions": 13937, "cpc": 0.18, "purchaseValue": 12318.13}, {"date": "2026-09-02", "spend": 147.19, "clicks": 721, "conversions": 43.0, "roas": 104.57, "impressions": 14195, "cpc": 0.2, "purchaseValue": 15391.71}, {"date": "2026-09-03", "spend": 130.36, "clicks": 756, "conversions": 37.2, "roas": 98.77, "impressions": 14247, "cpc": 0.17, "purchaseValue": 12876.25}, {"date": "2026-09-04", "spend": 162.33, "clicks": 752, "conversions": 47.2, "roas": 79.51, "impressions": 16864, "cpc": 0.22, "purchaseValue": 12907.13}, {"date": "2026-09-05", "spend": 136.15, "clicks": 727, "conversions": 33.8, "roas": 86.98, "impressions": 16130, "cpc": 0.19, "purchaseValue": 11841.65}, {"date": "2026-09-06", "spend": 157.13, "clicks": 790, "conversions": 29.3, "roas": 68.2, "impressions": 16400, "cpc": 0.2, "purchaseValue": 10716.07}, {"date": "2026-09-07", "spend": 134.68, "clicks": 753, "conversions": 36.9, "roas": 89.27, "impressions": 17618, "cpc": 0.18, "purchaseValue": 12022.84}, {"date": "2026-09-08", "spend": 154.44, "clicks": 818, "conversions": 40.6, "roas": 61.65, "impressions": 15925, "cpc": 0.19, "purchaseValue": 9521.3}, {"date": "2026-09-09", "spend": 125.98, "clicks": 742, "conversions": 35.8, "roas": 83.53, "impressions": 12900, "cpc": 0.17, "purchaseValue": 10523.65}, {"date": "2026-09-10", "spend": 157.04, "clicks": 783, "conversions": 39.9, "roas": 100.03, "impressions": 15578, "cpc": 0.2, "purchaseValue": 15709.36}, {"date": "2026-09-11", "spend": 195.68, "clicks": 847, "conversions": 41.5, "roas": 72.14, "impressions": 17345, "cpc": 0.23, "purchaseValue": 14115.79}, {"date": "2026-09-12", "spend": 223.55, "clicks": 905, "conversions": 33.7, "roas": 32.43, "impressions": 19960, "cpc": 0.25, "purchaseValue": 7248.85}, {"date": "2026-09-13", "spend": 218.82, "clicks": 1003, "conversions": 31.2, "roas": 39.2, "impressions": 22837, "cpc": 0.22, "purchaseValue": 8578.59}, {"date": "2026-09-14", "spend": 212.5, "clicks": 998, "conversions": 40.9, "roas": 60.62, "impressions": 19094, "cpc": 0.21, "purchaseValue": 12881.72}, {"date": "2026-09-15", "spend": 209.32, "clicks": 925, "conversions": 31.4, "roas": 34.09, "impressions": 19016, "cpc": 0.23, "purchaseValue": 7135.94}, {"date": "2026-09-16", "spend": 230.83, "clicks": 992, "conversions": 55.9, "roas": 62.34, "impressions": 18419, "cpc": 0.23, "purchaseValue": 14390.68}, {"date": "2026-09-17", "spend": 212.56, "clicks": 916, "conversions": 32.8, "roas": 29.72, "impressions": 16973, "cpc": 0.23, "purchaseValue": 6316.76}, {"date": "2026-09-18", "spend": 180.98, "clicks": 889, "conversions": 31.4, "roas": 79.27, "impressions": 20816, "cpc": 0.2, "purchaseValue": 14345.93}, {"date": "2026-09-19", "spend": 266.62, "clicks": 1087, "conversions": 30.0, "roas": 34.15, "impressions": 27401, "cpc": 0.25, "purchaseValue": 9104.42}, {"date": "2026-09-20", "spend": 219.76, "clicks": 1047, "conversions": 46.6, "roas": 46.77, "impressions": 20760, "cpc": 0.21, "purchaseValue": 10277.43}, {"date": "2026-09-21", "spend": 205.8, "clicks": 918, "conversions": 20.7, "roas": 20.34, "impressions": 17969, "cpc": 0.22, "purchaseValue": 4186.13}, {"date": "2026-09-22", "spend": 182.82, "clicks": 896, "conversions": 27.3, "roas": 31.53, "impressions": 18260, "cpc": 0.2, "purchaseValue": 5763.97}, {"date": "2026-09-23", "spend": 218.71, "clicks": 971, "conversions": 31.3, "roas": 42.55, "impressions": 20438, "cpc": 0.23, "purchaseValue": 9307.13}, {"date": "2026-09-24", "spend": 226.43, "clicks": 907, "conversions": 36.9, "roas": 33.23, "impressions": 18899, "cpc": 0.25, "purchaseValue": 7524.58}, {"date": "2026-09-25", "spend": 191.99, "clicks": 773, "conversions": 27.9, "roas": 41.54, "impressions": 15125, "cpc": 0.25, "purchaseValue": 7975.3}, {"date": "2026-09-26", "spend": 211.54, "clicks": 820, "conversions": 26.8, "roas": 37.87, "impressions": 19076, "cpc": 0.26, "purchaseValue": 8010.48}, {"date": "2026-09-27", "spend": 253.37, "clicks": 930, "conversions": 29.6, "roas": 31.59, "impressions": 21163, "cpc": 0.27, "purchaseValue": 8003.17}, {"date": "2026-09-28", "spend": 170.35, "clicks": 816, "conversions": 22.0, "roas": 29.83, "impressions": 15238, "cpc": 0.21, "purchaseValue": 5081.05}, {"date": "2026-09-29", "spend": 193.3, "clicks": 897, "conversions": 33.8, "roas": 46.13, "impressions": 16280, "cpc": 0.22, "purchaseValue": 8917.25}, {"date": "2026-09-30", "spend": 192.18, "clicks": 877, "conversions": 33.9, "roas": 40.69, "impressions": 16288, "cpc": 0.22, "purchaseValue": 7819.42}, {"date": "2026-10-01", "spend": 187.98, "clicks": 992, "conversions": 28.8, "roas": 19.87, "impressions": 16540, "cpc": 0.19, "purchaseValue": 3734.43}, {"date": "2026-10-02", "spend": 217.52, "clicks": 1001, "conversions": 37.7, "roas": 41.93, "impressions": 18957, "cpc": 0.22, "purchaseValue": 9121.57}, {"date": "2026-10-03", "spend": 215.36, "clicks": 981, "conversions": 26.8, "roas": 29.77, "impressions": 21698, "cpc": 0.22, "purchaseValue": 6410.69}, {"date": "2026-10-04", "spend": 196.21, "clicks": 838, "conversions": 32.0, "roas": 43.28, "impressions": 19648, "cpc": 0.23, "purchaseValue": 8491.15}, {"date": "2026-10-05", "spend": 245.29, "clicks": 925, "conversions": 29.2, "roas": 44.07, "impressions": 20533, "cpc": 0.27, "purchaseValue": 10808.85}, {"date": "2026-10-06", "spend": 193.41, "clicks": 832, "conversions": 42.3, "roas": 41.8, "impressions": 15376, "cpc": 0.23, "purchaseValue": 8084.31}, {"date": "2026-10-07", "spend": 232.63, "clicks": 992, "conversions": 45.8, "roas": 48.37, "impressions": 20758, "cpc": 0.23, "purchaseValue": 11253.44}, {"date": "2026-10-08", "spend": 205.74, "clicks": 880, "conversions": 33.8, "roas": 35.65, "impressions": 17968, "cpc": 0.23, "purchaseValue": 7335.5}, {"date": "2026-10-09", "spend": 214.49, "clicks": 855, "conversions": 31.9, "roas": 33.44, "impressions": 17701, "cpc": 0.25, "purchaseValue": 7173.52}, {"date": "2026-10-10", "spend": 225.59, "clicks": 826, "conversions": 24.3, "roas": 20.2, "impressions": 19385, "cpc": 0.27, "purchaseValue": 4556.17}, {"date": "2026-10-11", "spend": 228.75, "clicks": 909, "conversions": 31.8, "roas": 44.94, "impressions": 20951, "cpc": 0.25, "purchaseValue": 10279.02}, {"date": "2026-10-12", "spend": 186.47, "clicks": 814, "conversions": 30.2, "roas": 42.08, "impressions": 16274, "cpc": 0.23, "purchaseValue": 7846.99}, {"date": "2026-10-13", "spend": 206.68, "clicks": 855, "conversions": 32.9, "roas": 34.74, "impressions": 17368, "cpc": 0.24, "purchaseValue": 7180.96}, {"date": "2026-10-14", "spend": 211.98, "clicks": 1014, "conversions": 27.3, "roas": 39.33, "impressions": 18408, "cpc": 0.21, "purchaseValue": 8336.76}, {"date": "2026-10-15", "spend": 195.41, "clicks": 873, "conversions": 26.8, "roas": 40.82, "impressions": 16015, "cpc": 0.22, "purchaseValue": 7975.87}, {"date": "2026-10-16", "spend": 206.24, "clicks": 945, "conversions": 36.2, "roas": 39.58, "impressions": 19064, "cpc": 0.22, "purchaseValue": 8162.19}, {"date": "2026-10-17", "spend": 240.74, "clicks": 976, "conversions": 36.5, "roas": 50.69, "impressions": 21402, "cpc": 0.25, "purchaseValue": 12203.64}, {"date": "2026-10-18", "spend": 236.68, "clicks": 866, "conversions": 28.0, "roas": 24.19, "impressions": 20648, "cpc": 0.27, "purchaseValue": 5725.78}, {"date": "2026-10-19", "spend": 182.87, "clicks": 772, "conversions": 29.5, "roas": 23.6, "impressions": 12234, "cpc": 0.24, "purchaseValue": 4316.26}, {"date": "2026-10-20", "spend": 196.1, "clicks": 859, "conversions": 25.7, "roas": 25.33, "impressions": 15804, "cpc": 0.23, "purchaseValue": 4968.06}, {"date": "2026-10-21", "spend": 195.12, "clicks": 789, "conversions": 31.8, "roas": 22.75, "impressions": 14036, "cpc": 0.25, "purchaseValue": 4438.49}, {"date": "2026-10-22", "spend": 217.91, "clicks": 946, "conversions": 30.0, "roas": 30.47, "impressions": 19773, "cpc": 0.23, "purchaseValue": 6640.38}, {"date": "2026-10-23", "spend": 178.75, "clicks": 785, "conversions": 30.7, "roas": 44.98, "impressions": 16482, "cpc": 0.23, "purchaseValue": 8040.71}, {"date": "2026-10-24", "spend": 207.07, "clicks": 796, "conversions": 23.0, "roas": 25.93, "impressions": 17334, "cpc": 0.26, "purchaseValue": 5368.41}, {"date": "2026-10-25", "spend": 198.24, "clicks": 670, "conversions": 15.9, "roas": 0.99, "impressions": 16231, "cpc": 0.3, "purchaseValue": 195.9}, {"date": "2026-10-26", "spend": 215.24, "clicks": 730, "conversions": 29.8, "roas": 29.21, "impressions": 16877, "cpc": 0.29, "purchaseValue": 6286.39}, {"date": "2026-10-27", "spend": 190.64, "clicks": 732, "conversions": 32.1, "roas": 35.41, "impressions": 15247, "cpc": 0.26, "purchaseValue": 6750.23}, {"date": "2026-10-28", "spend": 188.6, "clicks": 858, "conversions": 25.6, "roas": 10.73, "impressions": 13593, "cpc": 0.22, "purchaseValue": 2024.12}, {"date": "2026-10-29", "spend": 191.22, "clicks": 846, "conversions": 21.3, "roas": 12.71, "impressions": 16080, "cpc": 0.23, "purchaseValue": 2431.04}, {"date": "2026-10-30", "spend": 192.9, "clicks": 838, "conversions": 24.3, "roas": 45.52, "impressions": 14266, "cpc": 0.23, "purchaseValue": 8781.3}, {"date": "2026-10-31", "spend": 16.73, "clicks": 107, "conversions": 0.0, "roas": 0.0, "impressions": 2181, "cpc": 0.16, "purchaseValue": 0.0}]};
+
+const metaMap = Object.fromEntries(DATA.meta.map(r => [r.date, r]));
+const googleMap = Object.fromEntries(DATA.google.map(r => [r.date, r]));
+const allDates = [...new Set([...DATA.meta.map(r => r.date), ...DATA.google.map(r => r.date)])].sort();
+
+const monthNames = { '08': 'Agosto', '09': 'Setembro', '10': 'Outubro' };
+
+let chart;
+let currentMetric = 'spend';
+let currentView = 'daily';
+let currentMonth = 'all';
+
+function getFilteredDates() {
+  if (currentMonth === 'all') return allDates;
+  return allDates.filter(d => d.slice(5, 7) === currentMonth);
+}
+
+function calcCPC(spend, clicks) {
+  return clicks > 0 ? spend / clicks : 0;
+}
+
+function calcROAS(purchaseValue, spend) {
+  return spend > 0 ? purchaseValue / spend : 0;
+}
+
+function calcCPA(spend, conversions) {
+  return conversions > 0 ? spend / conversions : 0;
+}
+
+function getValue(row, metric) {
+  if (!row) return 0;
+  if (metric === 'spend') return row.spend || 0;
+  if (metric === 'clicks') return row.clicks || 0;
+  if (metric === 'cpc') return row.cpc || 0;
+  if (metric === 'roas') return row.roas || 0;
+  if (metric === 'cpa') return calcCPA(row.spend || 0, row.conversions || 0);
+  return 0;
+}
+
+function getMonthlyData(dates, metric) {
+  const months = [...new Set(dates.map(d => d.slice(0, 7)))].sort();
+  return months.map(ym => {
+    const days = dates.filter(d => d.startsWith(ym));
+    if (metric === 'cpc') {
+      const metaSpend = days.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+      const metaClicks = days.reduce((s, d) => s + (metaMap[d]?.clicks || 0), 0);
+      const googleSpend = days.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+      const googleClicks = days.reduce((s, d) => s + (googleMap[d]?.clicks || 0), 0);
+      return {
+        label: monthNames[ym.slice(5)] || ym,
+        meta: calcCPC(metaSpend, metaClicks),
+        google: calcCPC(googleSpend, googleClicks)
+      };
+    } else if (metric === 'roas') {
+      const metaSpend = days.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+      const metaPV = days.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0);
+      const googleSpend = days.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+      const googlePV = days.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0);
+      return {
+        label: monthNames[ym.slice(5)] || ym,
+        meta: calcROAS(metaPV, metaSpend),
+        google: calcROAS(googlePV, googleSpend)
+      };
+    } else if (metric === 'cpa') {
+      const metaSpend = days.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+      const metaConv = days.reduce((s, d) => s + (metaMap[d]?.conversions || 0), 0);
+      const googleSpend = days.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+      const googleConv = days.reduce((s, d) => s + (googleMap[d]?.conversions || 0), 0);
+      return {
+        label: monthNames[ym.slice(5)] || ym,
+        meta: calcCPA(metaSpend, metaConv),
+        google: calcCPA(googleSpend, googleConv)
+      };
+    } else {
+      const meta = days.reduce((s, d) => s + getValue(metaMap[d], metric), 0);
+      const google = days.reduce((s, d) => s + getValue(googleMap[d], metric), 0);
+      return { label: monthNames[ym.slice(5)] || ym, meta, google };
+    }
+  });
+}
+
+function formatValue(v, metric) {
+  if (metric === 'spend' || metric === 'cpc' || metric === 'cpa') {
+    return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  if (metric === 'roas') {
+    return v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'x';
+  }
+  return v.toLocaleString('pt-BR');
+}
+
+function updateCards(dates) {
+  let metaVal, googleVal, totalVal;
+  if (currentMetric === 'cpc') {
+    const metaSpend = dates.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+    const metaClicks = dates.reduce((s, d) => s + (metaMap[d]?.clicks || 0), 0);
+    const googleSpend = dates.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+    const googleClicks = dates.reduce((s, d) => s + (googleMap[d]?.clicks || 0), 0);
+    metaVal = calcCPC(metaSpend, metaClicks);
+    googleVal = calcCPC(googleSpend, googleClicks);
+    totalVal = calcCPC(metaSpend + googleSpend, metaClicks + googleClicks);
+  } else if (currentMetric === 'roas') {
+    const metaSpend = dates.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+    const metaPV = dates.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0);
+    const googleSpend = dates.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+    const googlePV = dates.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0);
+    metaVal = calcROAS(metaPV, metaSpend);
+    googleVal = calcROAS(googlePV, googleSpend);
+    totalVal = calcROAS(metaPV + googlePV, metaSpend + googleSpend);
+  } else if (currentMetric === 'cpa') {
+    const metaSpend = dates.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+    const metaConv = dates.reduce((s, d) => s + (metaMap[d]?.conversions || 0), 0);
+    const googleSpend = dates.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+    const googleConv = dates.reduce((s, d) => s + (googleMap[d]?.conversions || 0), 0);
+    metaVal = calcCPA(metaSpend, metaConv);
+    googleVal = calcCPA(googleSpend, googleConv);
+    totalVal = calcCPA(metaSpend + googleSpend, metaConv + googleConv);
+  } else {
+    metaVal = dates.reduce((s, d) => s + getValue(metaMap[d], currentMetric), 0);
+    googleVal = dates.reduce((s, d) => s + getValue(googleMap[d], currentMetric), 0);
+    totalVal = metaVal + googleVal;
+  }
+  document.getElementById('cards').innerHTML = `
+    <div class="card meta"><div class="label">Meta Ads</div><div class="value">${formatValue(metaVal, currentMetric)}</div></div>
+    <div class="card google"><div class="label">Google Ads</div><div class="value">${formatValue(googleVal, currentMetric)}</div></div>
+    <div class="card total"><div class="label">Total</div><div class="value">${formatValue(totalVal, currentMetric)}</div></div>
+  `;
+}
+
+function updateChart(dates) {
+  const titles = {
+    spend: { daily: 'Gasto diário (R$)', monthly: 'Gasto mensal (R$)' },
+    clicks: { daily: 'Cliques diários', monthly: 'Cliques mensais' },
+    cpc: { daily: 'CPC diário (R$)', monthly: 'CPC mensal (R$)' },
+    roas: { daily: 'ROAS diário', monthly: 'ROAS mensal' },
+    cpa: { daily: 'Custo por venda diário (R$)', monthly: 'Custo por venda mensal (R$)' }
+  };
+
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#e8eef5' } },
+      tooltip: { mode: 'index', intersect: false }
+    },
+    scales: {
+      x: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' } },
+      y: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' } }
+    }
+  };
+
+  if (currentMetric === 'spend' || currentMetric === 'cpc' || currentMetric === 'cpa') {
+    commonOptions.scales.y.ticks.callback = v => 'R$ ' + (currentMetric === 'spend' ? v : v.toFixed(2));
+  } else if (currentMetric === 'roas') {
+    commonOptions.scales.y.ticks.callback = v => v.toFixed(1) + 'x';
+  }
+
+  if (chart) chart.destroy();
+
+  if (currentView === 'daily') {
+    const labels = dates.map(d => d.slice(5));
+    const metaData = dates.map(d => getValue(metaMap[d], currentMetric));
+    const googleData = dates.map(d => getValue(googleMap[d], currentMetric));
+
+    chart = new Chart(document.getElementById('chart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Meta Ads', data: metaData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 },
+          { label: 'Google Ads', data: googleData, borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 }
+        ]
+      },
+      options: {
+        ...commonOptions,
+        plugins: {
+          ...commonOptions.plugins,
+          title: { display: true, text: titles[currentMetric].daily, color: '#e8eef5', font: { size: 16 } }
+        }
+      }
+    });
+  } else {
+    const monthly = getMonthlyData(dates, currentMetric);
+    const labels = monthly.map(m => m.label);
+    const metaData = monthly.map(m => m.meta);
+    const googleData = monthly.map(m => m.google);
+
+    chart = new Chart(document.getElementById('chart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Meta Ads', data: metaData, backgroundColor: 'rgba(24,119,242,0.7)' },
+          { label: 'Google Ads', data: googleData, backgroundColor: 'rgba(52,168,83,0.7)' }
+        ]
+      },
+      options: {
+        ...commonOptions,
+        plugins: {
+          ...commonOptions.plugins,
+          title: { display: true, text: titles[currentMetric].monthly, color: '#e8eef5', font: { size: 16 } }
+        }
+      }
+    });
+  }
+}
+
+function render() {
+  document.querySelectorAll('#metricBtns button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.metric === currentMetric);
+  });
+  document.querySelectorAll('#viewBtns button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === currentView);
+  });
+  document.querySelectorAll('#filters button').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.month === currentMonth);
+  });
+  const dates = getFilteredDates();
+  updateCards(dates);
+  updateChart(dates);
+}
+
+document.getElementById('metricBtns').addEventListener('click', e => {
+  if (e.target.tagName === 'BUTTON') {
+    currentMetric = e.target.dataset.metric;
+    render();
+  }
+});
+
+document.getElementById('viewBtns').addEventListener('click', e => {
+  if (e.target.tagName === 'BUTTON') {
+    currentView = e.target.dataset.view;
+    render();
+  }
+});
+
+document.getElementById('filters').addEventListener('click', e => {
+  if (e.target.tagName === 'BUTTON') {
+    currentMonth = e.target.dataset.month;
+    render();
+  }
+});
+
+render();
+</script>
 </body>
 </html>
