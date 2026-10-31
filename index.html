@@ -231,7 +231,10 @@ function getMonthlyData(dates, metric) {
         label: monthNames[ym.slice(5)] || ym,
         meta: calcCPC(metaSpend, metaClicks),
         google: calcCPC(googleSpend, googleClicks),
-        pinterest: calcCPC(pinSpend, pinClicks)
+        pinterest: calcCPC(pinSpend, pinClicks),
+        metaSales: days.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0),
+        googleSales: days.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0),
+        pinSales: days.reduce((s, d) => s + (pinterestMap[d]?.purchaseValue || 0), 0)
       };
     } else if (metric === 'roas') {
       const metaSpend = days.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
@@ -244,7 +247,10 @@ function getMonthlyData(dates, metric) {
         label: monthNames[ym.slice(5)] || ym,
         meta: calcROAS(metaPV, metaSpend),
         google: calcROAS(googlePV, googleSpend),
-        pinterest: calcROAS(pinPV, pinSpend)
+        pinterest: calcROAS(pinPV, pinSpend),
+        metaSales: days.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0),
+        googleSales: days.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0),
+        pinSales: days.reduce((s, d) => s + (pinterestMap[d]?.purchaseValue || 0), 0)
       };
     } else if (metric === 'cpa') {
       const metaSpend = days.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
@@ -257,13 +263,19 @@ function getMonthlyData(dates, metric) {
         label: monthNames[ym.slice(5)] || ym,
         meta: calcCPA(metaSpend, metaConv),
         google: calcCPA(googleSpend, googleConv),
-        pinterest: calcCPA(pinSpend, pinConv)
+        pinterest: calcCPA(pinSpend, pinConv),
+        metaSales: days.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0),
+        googleSales: days.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0),
+        pinSales: days.reduce((s, d) => s + (pinterestMap[d]?.purchaseValue || 0), 0)
       };
     } else {
       const meta = days.reduce((s, d) => s + getValue(metaMap[d], metric), 0);
       const google = days.reduce((s, d) => s + getValue(googleMap[d], metric), 0);
       const pinterest = days.reduce((s, d) => s + getValue(pinterestMap[d], metric), 0);
-      return { label: monthNames[ym.slice(5)] || ym, meta, google, pinterest };
+      const metaSales = days.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0);
+      const googleSales = days.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0);
+      const pinSales = days.reduce((s, d) => s + (pinterestMap[d]?.purchaseValue || 0), 0);
+      return { label: monthNames[ym.slice(5)] || ym, meta, google, pinterest, metaSales, googleSales, pinSales };
     }
   });
 }
@@ -346,7 +358,12 @@ function updateChart(dates) {
     },
     scales: {
       x: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' } },
-      y: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' } }
+      y: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' }, position: 'left' },
+      y2: { 
+        ticks: { color: '#fbbf24', callback: v => 'R$ ' + v.toLocaleString('pt-BR') }, 
+        grid: { drawOnChartArea: false }, 
+        position: 'right' 
+      }
     }
   };
 
@@ -363,15 +380,21 @@ function updateChart(dates) {
     const metaData = dates.map(d => getValue(metaMap[d], currentMetric));
     const googleData = dates.map(d => getValue(googleMap[d], currentMetric));
     const pinterestData = dates.map(d => getValue(pinterestMap[d], currentMetric));
+    const metaSales = dates.map(d => metaMap[d]?.purchaseValue || 0);
+    const googleSales = dates.map(d => googleMap[d]?.purchaseValue || 0);
+    const pinSales = dates.map(d => pinterestMap[d]?.purchaseValue || 0);
 
     chart = new Chart(document.getElementById('chart'), {
       type: 'line',
       data: {
         labels,
         datasets: [
-          { label: 'Meta Ads', data: metaData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 },
-          { label: 'Google Ads', data: googleData, borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 },
-          { label: 'Pinterest Ads', data: pinterestData, borderColor: '#e60023', backgroundColor: 'rgba(230,0,35,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 }
+          { label: 'Meta Ads', data: metaData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6, yAxisID: 'y' },
+          { label: 'Google Ads', data: googleData, borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6, yAxisID: 'y' },
+          { label: 'Pinterest Ads', data: pinterestData, borderColor: '#e60023', backgroundColor: 'rgba(230,0,35,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6, yAxisID: 'y' },
+          { label: 'Vendas Meta', data: metaSales, borderColor: '#fbbf24', borderDash: [5,5], tension: 0.3, pointRadius: 2, yAxisID: 'y2' },
+          { label: 'Vendas Google', data: googleSales, borderColor: '#f59e0b', borderDash: [5,5], tension: 0.3, pointRadius: 2, yAxisID: 'y2' },
+          { label: 'Vendas Pinterest', data: pinSales, borderColor: '#d97706', borderDash: [5,5], tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
         ]
       },
       options: {
@@ -388,15 +411,21 @@ function updateChart(dates) {
     const metaData = monthly.map(m => m.meta);
     const googleData = monthly.map(m => m.google);
     const pinterestData = monthly.map(m => m.pinterest);
+    const metaSales = monthly.map(m => m.metaSales || 0);
+    const googleSales = monthly.map(m => m.googleSales || 0);
+    const pinSales = monthly.map(m => m.pinSales || 0);
 
     chart = new Chart(document.getElementById('chart'), {
       type: 'bar',
       data: {
         labels,
         datasets: [
-          { label: 'Meta Ads', data: metaData, backgroundColor: 'rgba(24,119,242,0.7)' },
-          { label: 'Google Ads', data: googleData, backgroundColor: 'rgba(52,168,83,0.7)' },
-          { label: 'Pinterest Ads', data: pinterestData, backgroundColor: 'rgba(230,0,35,0.7)' }
+          { label: 'Meta Ads', data: metaData, backgroundColor: 'rgba(24,119,242,0.7)', yAxisID: 'y' },
+          { label: 'Google Ads', data: googleData, backgroundColor: 'rgba(52,168,83,0.7)', yAxisID: 'y' },
+          { label: 'Pinterest Ads', data: pinterestData, backgroundColor: 'rgba(230,0,35,0.7)', yAxisID: 'y' },
+          { label: 'Vendas Meta', data: metaSales, backgroundColor: 'rgba(251,191,36,0.5)', yAxisID: 'y2' },
+          { label: 'Vendas Google', data: googleSales, backgroundColor: 'rgba(245,158,11,0.5)', yAxisID: 'y2' },
+          { label: 'Vendas Pinterest', data: pinSales, backgroundColor: 'rgba(217,119,6,0.5)', yAxisID: 'y2' }
         ]
       },
       options: {
