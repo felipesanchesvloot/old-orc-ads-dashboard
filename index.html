@@ -149,6 +149,7 @@ document.getElementById('pass').addEventListener('keydown', e => { if (e.key ===
     <button data-metric="cpc">CPC</button>
     <button data-metric="roas">ROAS</button>
     <button data-metric="cpa">Custo por venda</button>
+    <button data-metric="custoBruto">Custo Bruto</button>
   </div>
 
   <div class="view-btns" id="viewBtns">
@@ -275,7 +276,10 @@ function getMonthlyData(dates, metric) {
       const metaSales = days.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0);
       const googleSales = days.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0);
       const pinSales = days.reduce((s, d) => s + (pinterestMap[d]?.purchaseValue || 0), 0);
-      return { label: monthNames[ym.slice(5)] || ym, meta, google, pinterest, metaSales, googleSales, pinSales };
+      const metaSpend = days.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+      const googleSpend = days.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+      const pinSpend = days.reduce((s, d) => s + (pinterestMap[d]?.spend || 0), 0);
+      return { label: monthNames[ym.slice(5)] || ym, meta, google, pinterest, metaSales, googleSales, pinSales, metaSpend, googleSpend, pinSpend };
     }
   });
 }
@@ -284,8 +288,8 @@ function formatValue(v, metric) {
   if (metric === 'spend' || metric === 'cpc' || metric === 'cpa') {
     return 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
-  if (metric === 'roas') {
-    return v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + 'x';
+  if (metric === 'roas' || metric === 'custoBruto') {
+    return v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + 'x';
   }
   return v.toLocaleString('pt-BR');
 }
@@ -325,6 +329,19 @@ function updateCards(dates) {
     googleVal = calcCPA(googleSpend, googleConv);
     pinVal = calcCPA(pinSpend, pinConv);
     totalVal = calcCPA(metaSpend + googleSpend + pinSpend, metaConv + googleConv + pinConv);
+  } else if (currentMetric === 'custoBruto') {
+    const metaSpend = dates.reduce((s, d) => s + (metaMap[d]?.spend || 0), 0);
+    const googleSpend = dates.reduce((s, d) => s + (googleMap[d]?.spend || 0), 0);
+    const pinSpend = dates.reduce((s, d) => s + (pinterestMap[d]?.spend || 0), 0);
+    const metaSales = dates.reduce((s, d) => s + (metaMap[d]?.purchaseValue || 0), 0);
+    const googleSales = dates.reduce((s, d) => s + (googleMap[d]?.purchaseValue || 0), 0);
+    const pinSales = dates.reduce((s, d) => s + (pinterestMap[d]?.purchaseValue || 0), 0);
+    metaVal = metaSpend > 0 ? metaSales / metaSpend : 0;
+    googleVal = googleSpend > 0 ? googleSales / googleSpend : 0;
+    pinVal = pinSpend > 0 ? pinSales / pinSpend : 0;
+    const totalSpend = metaSpend + googleSpend + pinSpend;
+    const totalSales = metaSales + googleSales + pinSales;
+    totalVal = totalSpend > 0 ? totalSales / totalSpend : 0;
   } else {
     metaVal = dates.reduce((s, d) => s + getValue(metaMap[d], currentMetric), 0);
     googleVal = dates.reduce((s, d) => s + getValue(googleMap[d], currentMetric), 0);
@@ -345,7 +362,8 @@ function updateChart(dates) {
     clicks: { daily: 'Cliques diários', monthly: 'Cliques mensais' },
     cpc: { daily: 'CPC diário (R$)', monthly: 'CPC mensal (R$)' },
     roas: { daily: 'ROAS diário', monthly: 'ROAS mensal' },
-    cpa: { daily: 'Custo por venda diário (R$)', monthly: 'Custo por venda mensal (R$)' }
+    cpa: { daily: 'Custo por venda diário (R$)', monthly: 'Custo por venda mensal (R$)' },
+    custoBruto: { daily: 'Custo Bruto diário (vendas ÷ gasto)', monthly: 'Custo Bruto mensal (vendas ÷ gasto)' }
   };
 
   const commonOptions = {
@@ -358,12 +376,7 @@ function updateChart(dates) {
     },
     scales: {
       x: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' } },
-      y: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' }, position: 'left' },
-      y2: { 
-        ticks: { color: '#fbbf24', callback: v => 'R$ ' + v.toLocaleString('pt-BR') }, 
-        grid: { drawOnChartArea: false }, 
-        position: 'right' 
-      }
+      y: { ticks: { color: '#8b9bb4' }, grid: { color: '#2a3548' } }
     }
   };
 
@@ -377,25 +390,32 @@ function updateChart(dates) {
 
   if (currentView === 'daily') {
     const labels = dates.map(d => d.slice(5));
-    const metaData = dates.map(d => getValue(metaMap[d], currentMetric));
-    const googleData = dates.map(d => getValue(googleMap[d], currentMetric));
-    const pinterestData = dates.map(d => getValue(pinterestMap[d], currentMetric));
-    const metaSales = dates.map(d => metaMap[d]?.purchaseValue || 0);
-    const googleSales = dates.map(d => googleMap[d]?.purchaseValue || 0);
-    const pinSales = dates.map(d => pinterestMap[d]?.purchaseValue || 0);
+    let datasets;
+    if (currentMetric === 'custoBruto') {
+      const combined = dates.map(d => {
+        const spend = (metaMap[d]?.spend || 0) + (googleMap[d]?.spend || 0) + (pinterestMap[d]?.spend || 0);
+        const sales = (metaMap[d]?.purchaseValue || 0) + (googleMap[d]?.purchaseValue || 0) + (pinterestMap[d]?.purchaseValue || 0);
+        return spend > 0 ? sales / spend : 0;
+      });
+      datasets = [
+        { label: 'Custo Bruto (3 plataformas)', data: combined, borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.15)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 }
+      ];
+    } else {
+      const metaData = dates.map(d => getValue(metaMap[d], currentMetric));
+      const googleData = dates.map(d => getValue(googleMap[d], currentMetric));
+      const pinterestData = dates.map(d => getValue(pinterestMap[d], currentMetric));
+      datasets = [
+        { label: 'Meta Ads', data: metaData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 },
+        { label: 'Google Ads', data: googleData, borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 },
+        { label: 'Pinterest Ads', data: pinterestData, borderColor: '#e60023', backgroundColor: 'rgba(230,0,35,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6 }
+      ];
+    }
 
     chart = new Chart(document.getElementById('chart'), {
       type: 'line',
       data: {
         labels,
-        datasets: [
-          { label: 'Meta Ads', data: metaData, borderColor: '#1877f2', backgroundColor: 'rgba(24,119,242,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6, yAxisID: 'y' },
-          { label: 'Google Ads', data: googleData, borderColor: '#34a853', backgroundColor: 'rgba(52,168,83,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6, yAxisID: 'y' },
-          { label: 'Pinterest Ads', data: pinterestData, borderColor: '#e60023', backgroundColor: 'rgba(230,0,35,0.1)', tension: 0.3, fill: true, pointRadius: 3, pointHoverRadius: 6, yAxisID: 'y' },
-          { label: 'Vendas Meta', data: metaSales, borderColor: '#fbbf24', borderDash: [5,5], tension: 0.3, pointRadius: 2, yAxisID: 'y2' },
-          { label: 'Vendas Google', data: googleSales, borderColor: '#f59e0b', borderDash: [5,5], tension: 0.3, pointRadius: 2, yAxisID: 'y2' },
-          { label: 'Vendas Pinterest', data: pinSales, borderColor: '#d97706', borderDash: [5,5], tension: 0.3, pointRadius: 2, yAxisID: 'y2' }
-        ]
+        datasets
       },
       options: {
         ...commonOptions,
@@ -408,25 +428,32 @@ function updateChart(dates) {
   } else {
     const monthly = getMonthlyData(dates, currentMetric);
     const labels = monthly.map(m => m.label);
-    const metaData = monthly.map(m => m.meta);
-    const googleData = monthly.map(m => m.google);
-    const pinterestData = monthly.map(m => m.pinterest);
-    const metaSales = monthly.map(m => m.metaSales || 0);
-    const googleSales = monthly.map(m => m.googleSales || 0);
-    const pinSales = monthly.map(m => m.pinSales || 0);
+    let datasets;
+    if (currentMetric === 'custoBruto') {
+      const combined = monthly.map(m => {
+        const spend = (m.metaSpend || 0) + (m.googleSpend || 0) + (m.pinSpend || 0);
+        const sales = (m.metaSales || 0) + (m.googleSales || 0) + (m.pinSales || 0);
+        return spend > 0 ? sales / spend : 0;
+      });
+      datasets = [
+        { label: 'Custo Bruto (3 plataformas)', data: combined, backgroundColor: 'rgba(251,191,36,0.7)' }
+      ];
+    } else {
+      const metaData = monthly.map(m => m.meta);
+      const googleData = monthly.map(m => m.google);
+      const pinterestData = monthly.map(m => m.pinterest);
+      datasets = [
+        { label: 'Meta Ads', data: metaData, backgroundColor: 'rgba(24,119,242,0.7)' },
+        { label: 'Google Ads', data: googleData, backgroundColor: 'rgba(52,168,83,0.7)' },
+        { label: 'Pinterest Ads', data: pinterestData, backgroundColor: 'rgba(230,0,35,0.7)' }
+      ];
+    }
 
     chart = new Chart(document.getElementById('chart'), {
       type: 'bar',
       data: {
         labels,
-        datasets: [
-          { label: 'Meta Ads', data: metaData, backgroundColor: 'rgba(24,119,242,0.7)', yAxisID: 'y' },
-          { label: 'Google Ads', data: googleData, backgroundColor: 'rgba(52,168,83,0.7)', yAxisID: 'y' },
-          { label: 'Pinterest Ads', data: pinterestData, backgroundColor: 'rgba(230,0,35,0.7)', yAxisID: 'y' },
-          { label: 'Vendas Meta', data: metaSales, backgroundColor: 'rgba(251,191,36,0.5)', yAxisID: 'y2' },
-          { label: 'Vendas Google', data: googleSales, backgroundColor: 'rgba(245,158,11,0.5)', yAxisID: 'y2' },
-          { label: 'Vendas Pinterest', data: pinSales, backgroundColor: 'rgba(217,119,6,0.5)', yAxisID: 'y2' }
-        ]
+        datasets
       },
       options: {
         ...commonOptions,
