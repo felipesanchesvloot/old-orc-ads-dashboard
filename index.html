@@ -185,7 +185,7 @@ const metaMap = Object.fromEntries(DATA.meta.map(r => [r.date, r]));
 const googleMap = Object.fromEntries(DATA.google.map(r => [r.date, r]));
 const pinterestMap = Object.fromEntries(DATA.pinterest.map(r => [r.date, r]));
 const shopifyMap = Object.fromEntries(DATA.shopify.map(r => [r.date, r]));
-const allDates = [...new Set([...DATA.meta.map(r => r.date), ...DATA.google.map(r => r.date), ...DATA.pinterest.map(r => r.date)])].sort();
+const allDates = [...new Set([...DATA.meta.map(r => r.date), ...DATA.google.map(r => r.date), ...DATA.pinterest.map(r => r.date), ...DATA.shopify.map(r => r.date)])].sort();
 
 const monthNames = { '06': 'Junho', '07': 'Julho', '08': 'Agosto', '09': 'Setembro', '10': 'Outubro' };
 
